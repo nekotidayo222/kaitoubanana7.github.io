@@ -240,197 +240,197 @@ async def sugoroku_action(channel, player, dice):
     effect = board[player.position]
     effmsg = ""
     if effect == "コイン+200":
-    player.coins += 200
-    effmsg = "+200コインをもらった！"
+        player.coins += 200
+        effmsg = "+200コインをもらった！"
 
     elif effect == "コイン+120":
-    player.coins += 120
-    effmsg = "バイト代ゲット！+120コイン"
+        player.coins += 120
+        effmsg = "バイト代ゲット！+120コイン"
 
     elif effect == "コイン-80":
-    player.coins -= 80
-    effmsg = "うっかり支出…-80コイン"
+        player.coins -= 80
+        effmsg = "うっかり支出…-80コイン"
 
     elif effect == "推しのライブに当選！コイン+150":
-    player.coins += 150
-    effmsg = "推しのライブ大当たり！+150コイン"
+        player.coins += 150
+        effmsg = "推しのライブ大当たり！+150コイン"
 
     elif effect == "宝箱発見！コイン+ランダム":
-    found = random.randint(50, 200)
-    player.treasure += 1
-    player.coins += found
-    effmsg = f"宝箱から{found}コイン発見！"
+        found = random.randint(50, 200)
+        player.treasure += 1
+        player.coins += found
+        effmsg = f"宝箱から{found}コイン発見！"
     
     elif effect == "バズった！全員コイン+50":
-    for p in game_data["players"]:
-        p.coins += 50
-    effmsg = "バズった！全員コイン+50"
+        for p in game_data["players"]:
+            p.coins += 50
+        effmsg = "バズった！全員コイン+50"
 
     elif effect == "猫に癒やされ1回休み":
-    player.skip = True
-    effmsg = "猫に癒やされて次回休みだよ"
+        player.skip = True
+        effmsg = "猫に癒やされて次回休みだよ"
 
     elif effect == "推しが卒業…コイン-100":
-    player.coins -= 100
-    effmsg = "推しが卒業…ショックで-100コイン"
+        player.coins -= 100
+        effmsg = "推しが卒業…ショックで-100コイン"
 
     elif effect == "新作ガチャ爆死…コイン-80":
-    player.coins -= 80
-    effmsg = "ガチャ爆死！-80コイン"
+        player.coins -= 80
+        effmsg = "ガチャ爆死！-80コイン"
 
     elif effect == "合格発表！2マス進む":
-    player.position = min(player.position + 2, GOAL-1)
-    effmsg = "合格の勢いで2マス進む！"
+        player.position = min(player.position + 2, GOAL-1)
+        effmsg = "合格の勢いで2マス進む！"
 
     elif effect == "SNSで炎上…次回休み":
-    player.skip = True
-    effmsg = "SNSで炎上して1回休み…"
+        player.skip = True
+        effmsg = "SNSで炎上して1回休み…"
 
     elif effect == "手作りおにぎり大成功！コイン+30":
-    player.coins += 30
-    effmsg = "おにぎりが大成功！+30コイン"
+        player.coins += 30
+        effmsg = "おにぎりが大成功！+30コイン"
 
     elif effect == "課金爆死コイン-120":
-    player.coins -= 120
-    effmsg = "課金爆死！-120コイン"
+        player.coins -= 120
+        effmsg = "課金爆死！-120コイン"
 
     elif effect == "オールでカラオケコイン-40":
-    player.coins -= 40
-    effmsg = "オールでカラオケ、財布がスッカラカン…-40コイン"
+        player.coins -= 40
+        effmsg = "オールでカラオケ、財布がスッカラカン…-40コイン"
 
     elif effect == "筋トレ継続 コイン+40":
-    player.coins += 40
-    effmsg = "毎日筋トレえらい！+40コイン"
+        player.coins += 40
+        effmsg = "毎日筋トレえらい！+40コイン"
 
     elif effect == "推しのアクリルスタンド破損コイン-30":
-    player.coins -= 30
-    effmsg = "痛恨の破損…-30コイン"
+        player.coins -= 30
+        effmsg = "痛恨の破損…-30コイン"
 
     elif effect == "宝くじ1等！コイン+500":
-    player.coins += 500
-    effmsg = "なんと宝くじ1等！+500コイン"
+        player.coins += 500
+        effmsg = "なんと宝くじ1等！+500コイン"
 
     elif effect == "すべって転倒、1マス戻る":
-    player.position = max(player.position - 1, 0)
-    effmsg = "転倒して1マス戻る…"
+        player.position = max(player.position - 1, 0)
+        effmsg = "転倒して1マス戻る…"
 
     elif effect == "ダブルピースで写真映え！コイン+20":
-    player.coins += 20
-    effmsg = "映えで+20コイン"
+        player.coins += 20
+        effmsg = "映えで+20コイン"
 
     elif effect == "迷子…2マス戻る":
-    player.position = max(player.position - 2, 0)
-    effmsg = "迷子になって2マスぶん戻る…"
+        player.position = max(player.position - 2, 0)
+        effmsg = "迷子になって2マスぶん戻る…"
 
     elif effect == "友人と大喧嘩コイン-100":
-    player.coins -= 100
-    effmsg = "友人と大喧嘩！-100コイン"
+        player.coins -= 100
+        effmsg = "友人と大喧嘩！-100コイン"
 
     elif effect == "猫カフェでリラックス コイン+30":
-    player.coins += 30
-    effmsg = "猫カフェ最高！+30コイン"
+        player.coins += 30
+        effmsg = "猫カフェ最高！+30コイン"
 
     elif effect == "体育祭リレー優勝！コイン+70":
-    player.coins += 70
-    effmsg = "リレー優勝！+70コイン"
+        player.coins += 70
+        effmsg = "リレー優勝！+70コイン"
 
     elif effect == "ワクチン副反応…次回休み":
-    player.skip = True
-    effmsg = "副反応でしばらくお休み…"
+        player.skip = True
+        effmsg = "副反応でしばらくお休み…"
 
     elif effect == "目覚まし聞き逃し1回休み":
-    player.skip = True
-    effmsg = "目覚まし失敗で1回休み…"
+        player.skip = True
+        effmsg = "目覚まし失敗で1回休み…"
 
     elif effect == "大掃除でお宝発見！コイン+70":
-    player.coins += 70
-    effmsg = "大掃除でお宝ゲット！+70コイン"
+        player.coins += 70
+        effmsg = "大掃除でお宝ゲット！+70コイン"
 
     elif effect == "LINE誤爆コイン-20":
-    player.coins -= 20
-    effmsg = "LINE誤爆で赤面…-20コイン"
+        player.coins -= 20
+        effmsg = "LINE誤爆で赤面…-20コイン"
 
     elif effect == "好きな人に告白される！2マス進む":
-    player.position = min(player.position + 2, GOAL-1)
-    effmsg = "ラッキー！2マス進める！"
+        player.position = min(player.position + 2, GOAL-1)
+        effmsg = "ラッキー！2マス進める！"
 
     elif effect == "Amazonギフト当選 コイン+60":
-    player.coins += 60
-    effmsg = "Amazonギフトが届いた！+60コイン"
+        player.coins += 60
+        effmsg = "Amazonギフトが届いた！+60コイン"
 
     elif effect == "推しがTwitterでリプ返 コイン+40":
-    player.coins += 40
-    effmsg = "推しからのリプ！+40コイン"
+        player.coins += 40
+       effmsg = "推しからのリプ！+40コイン"
 
     elif effect == "定期券紛失…コイン-70":
-    player.coins -= 70
-    effmsg = "定期券を失くした…-70コイン"
+        player.coins -= 70
+        effmsg = "定期券を失くした…-70コイン"
 
     elif effect == "宿題忘れて先生に叱られるコイン-30":
-    player.coins -= 30
-    effmsg = "宿題忘れて-30コイン"
+        player.coins -= 30
+        effmsg = "宿題忘れて-30コイン"
 
     elif effect == "席替えで神席！1マス進む":
-    player.position = min(player.position + 1, GOAL-1)
-    effmsg = "神席GET！1マス進んだ！"
+        player.position = min(player.position + 1, GOAL-1)
+        effmsg = "神席GET！1マス進んだ！"
 
     elif effect == "深夜テンションで爆買いコイン-100":
-    player.coins -= 100
-    effmsg = "爆買いしすぎて-100コイン"
+        player.coins -= 100
+        effmsg = "爆買いしすぎて-100コイン"
 
     elif effect == "SNSハッキング被害コイン-100":
-    player.coins -= 100
-    effmsg = "ハッキング被害…-100コイン"
+        player.coins -= 100
+        effmsg = "ハッキング被害…-100コイン"
 
     elif effect == "牛丼並盛無料券 コイン+10":
-    player.coins += 10
-    effmsg = "無料券GET！+10コイン"
+        player.coins += 10
+        effmsg = "無料券GET！+10コイン"
 
     elif effect == "突然のプレゼント コイン+90":
-    player.coins += 90
-    effmsg = "思わぬプレゼント！+90コイン"
+        player.coins += 90
+        effmsg = "思わぬプレゼント！+90コイン"
 
     elif effect == "ゲーム実況で人気者！コイン+70":
-    player.coins += 70
-    effmsg = "ゲーム実況バズる！+70コイン"
+        player.coins += 70
+        effmsg = "ゲーム実況バズる！+70コイン"
 
     elif effect == "アンチからの粘着コイン-30":
-    player.coins -= 30
-    effmsg = "アンチ被害…-30コイン"
+        player.coins -= 30
+        effmsg = "アンチ被害…-30コイン"
 
     elif effect == "好きなラーメン屋閉店コイン-60":
-    player.coins -= 60
-    effmsg = "悲しみの-60コイン"
+        player.coins -= 60
+        effmsg = "悲しみの-60コイン"
 
     elif effect == "MV動画が世界で話題コイン+120":
-    player.coins += 120
-    effmsg = "世界的話題！+120コイン"
+        player.coins += 120
+        effmsg = "世界的話題！+120コイン"
 
     elif effect == "ラジオで名前を読まれるコイン+80":
-    player.coins += 80
-    effmsg = "ラジオで名前呼ばれた！+80コイン"
+        player.coins += 80
+        effmsg = "ラジオで名前呼ばれた！+80コイン"
 
     elif effect == "レジェンド級神引き！コイン+200":
-    player.coins += 200
-    effmsg = "神引き！！+200コイン"
+        player.coins += 200
+        effmsg = "神引き！！+200コイン"
 
     elif effect == "永久無料パスポート当選コイン+300":
-    player.coins += 300
-    effmsg = "人生最高の神運！+300コイン"
+        player.coins += 300
+        effmsg = "人生最高の神運！+300コイン"
 
     elif effect == "ゴール！！！":
-    effmsg = f"{player.member.display_name}がゴール！！クリア！"
-    game_data.clear()
-    await channel.send(effmsg)
-    return
+        effmsg = f"{player.member.display_name}がゴール！！クリア！"
+        game_data.clear()
+        await channel.send(effmsg)
+        return
 
     else:
-    effmsg = "何も起きなかった…"
+        effmsg = "何も起きなかった…"
 
 
     await channel.send(f"{player.member.mention}は{player.position}マス目 ({effect}) に到着!\n{effmsg}\n「/retire」でも途中脱落可能！")
-    game_data["turn"] += 1
-    await next_turn(channel)
+        game_data["turn"] += 1
+        await next_turn(channel)
 
 @bot.tree.command(name="retire", description="ゲームから脱落します")
 @app_commands.guilds(discord.Object(id=GUILD_ID))
