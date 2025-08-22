@@ -94,7 +94,7 @@ async def board_status():
 
 async def next_turn(channel):
     # 脱落者を除外
-active_players = [p for p in game_data["players"] if not p.retired]
+    active_players = [p for p in game_data["players"] if not p.retired]
     if len(active_players)==0:
         await channel.send("全員脱落でゲーム終了！")
         game_data["playing"]=False
