@@ -429,8 +429,8 @@ async def sugoroku_action(channel, player, dice):
 
 
     await channel.send(f"{player.member.mention}は{player.position}マス目 ({effect}) に到着!\n{effmsg}\n「/retire」でも途中脱落可能！")
-        game_data["turn"] += 1
-        await next_turn(channel)
+    game_data["turn"] += 1
+    await next_turn(channel)
 
 @bot.tree.command(name="retire", description="ゲームから脱落します")
 @app_commands.guilds(discord.Object(id=GUILD_ID))
