@@ -9,8 +9,7 @@ TOKEN = os.getenv("TOKEN")
 GUILD_ID = os.getenv("GUILD_ID")
 
 intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix="/", intents=intents)
+bot = commands.Bot(command_prefix='/', intents=intents)
 
 class Player:
     def __init__(self, member):
@@ -21,7 +20,6 @@ class Player:
         self.skip = False
         self.retired = False
 
-# ボード内容
 board = [
     "スタート",
     "コイン+100",
@@ -42,167 +40,163 @@ board = [
 ]
 GOAL = len(board) - 1
 
-game_data = {
-    "playing": False,
-    "players": [],
-    "turn": 0,
-    "current_msg": None,
-}
+game_data = {}
 
-### スラッシュコマンド「/startgame」
-@bot.tree.command(guild=discord.Object(id=GUILD_ID), name="startgame", description="すごろくゲームを開始します")
+class JoinView(discord.ui.View):
+    def __init__(self, host):
+        super().__init__(timeout=60)
+        self.host = host
+        self.player_ids = set()
+        self.players = []
+        self.started = False
+
+    @discord.ui.button(label="参加！", style=discord.ButtonStyle.primary)
+    async def join(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id in self.player_ids:
+            await interaction.response.send_message("すでに参加しています！", ephemeral=True)
+            return
+        self.player_ids.add(interaction.user.id)
+        self.players.append(Player(interaction.user))
+        await interaction.response.send_message(f"{interaction.user.mention}が参加しました。", ephemeral=True)
+
+    @discord.ui.button(label="開始！", style=discord.ButtonStyle.success)
+    async def start_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.host:
+            await interaction.response.send_message("主催者だけが開始できます。", ephemeral=True)
+            return
+        if len(self.players) < 2:
+            await interaction.response.send_message("2人以上必要です。", ephemeral=True)
+            return
+        self.started = True
+        self.stop()
+        await interaction.response.send_message("ゲーム開始！", ephemeral=False)
+
+@bot.tree.command(name="startgame", description="すごろくゲームを開始")
+@app_commands.guilds(discord.Object(id=GUILD_ID))
 async def startgame(interaction: discord.Interaction):
-    if game_data["playing"]:
+    if game_data.get('playing', False):
         await interaction.response.send_message("既にゲーム中です！", ephemeral=True)
         return
-
+   view = JoinView(interaction.user)
+    msg = await interaction.response.send_message("すごろく参加者募集中！ ボタンで参加→開始", view=view, ephemeral=False)
+    await view.wait()  # ボタン待機（1分または開始時点でstop）
+    if not view.started:
+        await interaction.followup.send("締切になりました。開始されませんでした。")
+        return
+    # playersリストを決定し、ゲーム開始!
     game_data["playing"] = True
-    game_data["players"] = []
+    game_data["players"] = view.players
     game_data["turn"] = 0
 
-    # 参加ボタンを表示
-    class JoinView(discord.ui.View):
-        @discord.ui.button(label="参加！", style=discord.ButtonStyle.primary)
-        async def join(self, btn, inter):
-            if any(p.member == inter.user for p in game_data["players"]):
-                await inter.response.send_message("既に参加しています！", ephemeral=True)
-                return
-            player = Player(inter.user)
-            game_data["players"].append(player)
-            await inter.response.send_message(f"{inter.user.mention}さん参加！", ephemeral=True)
-
-        @discord.ui.button(label="開始！", style=discord.ButtonStyle.success)
-        async def start_btn(self, btn, inter):
-            if len(game_data["players"]) < 2:
-                await inter.response.send_message("2人以上必要です！", ephemeral=True)
-                return
-            await inter.response.defer()
-            await inter.followup.send("ゲーム開始！")
-            await next_turn(inter.channel)
-
-    await interaction.response.send_message("すごろく参加者を募集します。最大1分。\nボタンで参加してください。", view=JoinView())
-
+    await next_turn(interaction.channel)
 
 async def board_status():
     lines = []
-    for player in game_data["players"]:
-        if player.retired: continue
-        stat = f"{player.member.display_name}: マス{player.position}（コイン{player.coins}、宝箱{player.treasure}）"
-        lines.append(stat)
-    return "■現状\n" + "\n".join(lines)
-
+    for p in game_data.get("players", []):
+        if not p.retired:
+            lines.append(f"{p.member.display_name}: マス{p.position}, コイン{p.coins}, 宝箱{p.treasure}")
+    return "■進行状況\n" + "\n".join(lines)
 
 async def next_turn(channel):
-    # 脱落者を除外
+    # アクティブ参加者
     active_players = [p for p in game_data["players"] if not p.retired]
-    if len(active_players)==0:
+    if not active_players:
         await channel.send("全員脱落でゲーム終了！")
-        game_data["playing"]=False
+        game_data.clear()
         return
-    cur_player = active_players[game_data["turn"] % len(active_players)]
+    turn = game_data["turn"] % len(active_players)
+    cur_player = active_players[turn]
     if cur_player.skip:
-        await channel.send(f"{cur_player.member.mention}は今回お休み。")
+        await channel.send(f"{cur_player.member.mention}は今回は休みです！")
         cur_player.skip = False
         game_data["turn"] += 1
         await next_turn(channel)
         return
 
-    # サイコロ＆脱落ボタン
-    class RollView(discord.ui.View):
+    class TurnView(discord.ui.View):
         @discord.ui.button(label="サイコロを振る", style=discord.ButtonStyle.primary)
-        async def roll_btn(self, btn, inter):
-            if inter.user != cur_player.member:
-                await inter.response.send_message("あなたの番ではありません。", ephemeral=True)
+        async def roll_btn(self, interaction: discord.Interaction, b):
+            if interaction.user != cur_player.member:
+                await interaction.response.send_message("あなたの番ではありません。", ephemeral=True)
                 return
+            await interaction.response.defer(thinking=True)
             dice = random.randint(1, 6)
-            await inter.response.send_message(f"{cur_player.member.mention}のサイコロ: {dice}！")
+            await interaction.followup.send(f"{cur_player.member.mention}のサイコロ：{dice}")
             await sugoroku_action(channel, cur_player, dice)
             self.stop()
-        @discord.ui.button(label="脱落(リタイア)", style=discord.ButtonStyle.danger)
-        async def retire_btn(self, btn, inter):
-            if inter.user != cur_player.member:
-                await inter.response.send_message("あなたの番ではありません。", ephemeral=True)
+        @discord.ui.button(label="脱落", style=discord.ButtonStyle.danger)
+        async def retire_btn(self, interaction: discord.Interaction, b):
+            if interaction.user != cur_player.member:
+                await interaction.response.send_message("あなたの番ではありません。", ephemeral=True)
                 return
             cur_player.retired = True
-            await channel.send(f"{cur_player.member.mention}が脱落しました。")
+            await interaction.response.send_message(f"{cur_player.member.mention}が脱落しました。")
             self.stop()
+            # turnを進めて次へ
             game_data["turn"] += 1
             await next_turn(channel)
 
-    msg = await channel.send(f"---\n{cur_player.member.mention}の番です。\n"+await board_status(),
-                             view=RollView())
-    game_data["current_msg"] = msg
+    await channel.send(f"----------------\n{cur_player.member.mention}の番!\n{await board_status()}", view=TurnView())
 
 async def sugoroku_action(channel, player, dice):
-    # 移動
     player.position += dice
     if player.position >= GOAL:
-        await channel.send(f"🏁 {player.member.mention}がゴール！おめでとう！\n最終結果：\n"+await board_status())
-        game_data["playing"] = False
+        await channel.send(f"🏁 {player.member.mention}がゴール！クリア！\n結果:\n{await board_status()}")
+        game_data.clear()
         return
-    effect = board[player.position]
+   effect = board[player.position]
     effmsg = ""
     if effect == "コイン+100":
-        player.coins += 100; effmsg = "+100コインゲット！"
+        player.coins += 100; effmsg = "+100コイン！"
     elif effect == "コイン+30":
-        player.coins += 30; effmsg = "+30コインゲット！"
+        player.coins += 30; effmsg = "+30コイン！"
     elif effect == "コイン-50":
         player.coins -= 50; effmsg = "-50コイン…"
     elif effect == "1マス戻る":
-        player.position = max(0, player.position-1); effmsg = "1マス戻る！"
+        player.position = max(0, player.position - 1); effmsg = "1マス戻る！"
     elif effect == "2マス進む":
-        player.position = min(GOAL-1, player.position+2); effmsg = "さらに2マス進む！"
+        player.position = min(GOAL - 1, player.position + 2); effmsg = "さらに2マス進む！"
     elif effect == "宝箱！":
-        player.treasure += 1; player.coins += random.randint(30,200); effmsg = "宝箱ゲット！何かいいことがある…"
+        player.treasure += 1; player.coins += random.randint(30, 200); effmsg = "宝箱ゲット！"
     elif effect == "フィーバー！コインx2":
-        player.coins *= 2; effmsg = "コインが2倍に！"
+        player.coins *= 2; effmsg = "コイン2倍！"
     elif effect == "次回休み":
-        player.skip = True; effmsg = "次回おやすみ。"
+        player.skip = True; effmsg = "次回お休み！"
     elif effect == "ランダムで誰かと位置交換":
-        targets = [p for p in game_data["players"] if p != player and not p.retired]
-        if targets:
-            target = random.choice(targets)
+        others = [p for p in game_data["players"] if p != player and not p.retired]
+        if others:
+            target = random.choice(others)
             player.position, target.position = target.position, player.position
-            effmsg = f"{target.member.display_name}と位置を入れ替え！"
+            effmsg = f"{target.member.display_name}と位置を交換！"
     elif effect == "お宝の気配（何もなし）":
         effmsg = "…何もなし！"
 
-    await channel.send(f"{player.member.mention}は{player.position}マス目({effect})に到着！\n{effmsg}\n"+await board_status())
+    await channel.send(f"{player.member.mention}は{player.position}マス目 ({effect}) に到着!\n{effmsg}\n「/retire」でも途中脱落可能！")
     game_data["turn"] += 1
     await next_turn(channel)
 
-### 脱落コマンド
-@bot.tree.command(guild=discord.Object(id=GUILD_ID), name="retire", description="ゲームからリタイアします")
+@bot.tree.command(name="retire", description="ゲームから脱落します")
+@app_commands.guilds(discord.Object(id=GUILD_ID))
 async def retire(interaction: discord.Interaction):
+    if not game_data.get("playing"):
+        await interaction.response.send_message("開催中のゲームがありません。", ephemeral=True)
+        return
+    found = False
     for player in game_data["players"]:
-        if player.member == interaction.user and not player.retired:
+        if player.member == interaction.user:
+            if player.retired:
+                await interaction.response.send_message("すでに脱落済みです。", ephemeral=True)
+                return
             player.retired = True
+            found = True
             await interaction.response.send_message(f"{interaction.user.mention}が脱落しました。")
-            return
-    await interaction.response.send_message("参加していない/既に脱落済みです。", ephemeral=True)
+    if not found:
+        await interaction.response.send_message("ゲーム参加者ではありません。", ephemeral=True)
 
-### 宝探しチャレンジ（別ミニゲーム例）
-@bot.tree.command(guild=discord.Object(id=GUILD_ID), name="treasure", description="宝探しゲーム！")
-async def treasure(interaction: discord.Interaction):
-    text_channels = [ch for ch in interaction.guild.text_channels if ch.permissions_for(interaction.guild.me).send_messages]
-    treasure_channel = random.choice(text_channels)
-    hint_msg = f"宝物（コイン{random.randint(10,100)}）をどこかのチャンネルに隠しました。チャンネル名の最初の文字は「{treasure_channel.name[0]}」！\nどのチャンネルでしょう？"
-    await interaction.response.send_message(hint_msg, ephemeral=True)
-    await treasure_channel.send("🏆このチャンネルに最初に「/found」と書き込んだ人が宝ゲット！")
-
-@bot.tree.command(guild=discord.Object(id=GUILD_ID), name="found", description="宝探し発見！")
-async def found(interaction: discord.Interaction):
-    # 本来は状態を記憶して当たり判定・重複防止処理も
-    await interaction.response.send_message("宝を見つけました！（今回は記念品のみです）", ephemeral=True)
-
-### 起動
 @bot.event
 async def on_ready():
-    print("ボット起動")
-    try:
-        synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
-        print(f"Slash commands synced: {len(synced)}")
-    except Exception as e:
-        print("Slashコマンド同期失敗", e)
+    print("Ready!")
+    # GUILD_ID部分を正しく設定して下さい
+    await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
 
 bot.run(TOKEN)
