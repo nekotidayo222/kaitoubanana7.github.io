@@ -237,7 +237,7 @@ async def sugoroku_action(channel, player, dice):
         await channel.send(f"🏁 {player.member.mention}がゴール！クリア！\n結果:\n{await board_status()}")
         game_data.clear()
         return
-   effect = board[player.position]
+    effect = board[player.position]
     effmsg = ""
     if effect == "コイン+100":
         player.coins += 100; effmsg = "+100コイン！"
