@@ -360,7 +360,7 @@ async def sugoroku_action(channel, player, dice):
 
     elif effect == "推しがTwitterでリプ返 コイン+40":
         player.coins += 40
-       effmsg = "推しからのリプ！+40コイン"
+        effmsg = "推しからのリプ！+40コイン"
 
     elif effect == "定期券紛失…コイン-70":
         player.coins -= 70
