@@ -170,7 +170,7 @@ async def startgame(interaction: discord.Interaction):
     if game_data.get('playing', False):
         await interaction.response.send_message("既にゲーム中です！", ephemeral=True)
         return
-   view = JoinView(interaction.user)
+    view = JoinView(interaction.user)
     msg = await interaction.response.send_message("すごろく参加者募集中！ ボタンで参加→開始", view=view, ephemeral=False)
     await view.wait()  # ボタン待機（1分または開始時点でstop）
     if not view.started:
